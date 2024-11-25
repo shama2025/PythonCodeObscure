@@ -1,4 +1,5 @@
 import os
+import random
 
 def scrape_cwd():
     """This function will scrape the text of each python file and return the text"""
@@ -7,31 +8,51 @@ def scrape_cwd():
     key = 0
     for file in cwd_list:
         try:
-            with open(file, 'r') as f:
-                content = f.read()
-            python_code.update({key : content})
-            key+=1
+            with open('test.py', 'r') as f:
+                content = f.readlines()
+                python_code.update({key : content})
+                key+=1
         except Exception as e:
             print(f"Error reading file {file}: {str(e)}")
-    return python_code
+    return formatter(chunk_dict(python_code))
 
-
+# Remove this function maybe
 def chunk_dict(python_code):
-    """This function will chunk the dictionary value to format one function at a time"""
+    """This function will chunk the dictionary values to format one function at a time"""
+    chunks = ''
+
+    chunked_list = []
+    test_py_list = python_code[0]
+    for element in test_py_list:
+        if  not element.isspace():
+            chunks+= element
+        else:
+            chunked_list.append(chunks)
+            chunks = ''
+    return chunked_list
 
 
 def formatter(python_code):
     """This function will feature formating the document and return a newly formated file"""
 
+    idx = 1
+    for element in python_code:
+        if "#" in element or '"""' in element: # replaces the comments with pirate text
+            "Need to find way to isolate only the line containing the comment"
+            # Can slice the string using the # or """ and """ or \n
+            split_elements = element.split('\n')
+            for element in split_elements:
+                if "#" not in element or '"""' not in element:
+                    split_elements.pop(split_elements.index(element))
+            print(split_elements)
+        if "def" in element: # formats function declaration to be exec("""""")
+            python_code[idx]= 'exec("""'+ element + '""")'
+
+    #print(python_code)
+
 def main():
     """This function will house all input for the file"""
     scraped_python_code = scrape_cwd()
-
-    if len(scraped_python_code) > 1:
-        partition_dict = chunk_dict(scraped_python_code)
-        formatter(partition_dict)
-    else:
-        formatter(scraped_python_code)
 
 if __name__ == "__main__":
     main()

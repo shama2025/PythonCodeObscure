@@ -1,4 +1,5 @@
 import random
+import os
 
 def generate_random_numbers(count, max_value):
     """Generate and return a list of random numbers."""
