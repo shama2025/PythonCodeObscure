@@ -4,7 +4,7 @@ import random
 
 def scrape_cwd():
     """This function will scrape the text of each python file and return the text"""
-    cwd_list = [element for element in os.listdir() if element.endswith('.py')]
+    cwd_list = [chunk for chunk in os.listdir() if chunk.endswith('.py')]
     python_code = {}
     key = 0
     for file in cwd_list:
@@ -24,9 +24,9 @@ def chunk_dict(python_code):
 
     chunked_list = []
     test_py_list = python_code[0]
-    for element in test_py_list:
-        if  not element.isspace():
-            chunks+= element
+    for chunk in test_py_list:
+        if  not chunk.isspace():
+            chunks+= chunk
         else:
             chunked_list.append(chunks)
             chunks = ''
@@ -38,34 +38,36 @@ def formatter(python_code):
 
     idx = 1
     shuffled_comments = []
-    for element in python_code:
-        if "#" in element or '"""' in element:
-            split_elements = element.split('\n')
-            for element in split_elements:
-                if "#" not in element and '"""' not in element:
-                    split_elements.pop(split_elements.index(element))
+    for chunk in python_code:
+        if "#" in chunk: # or '"""' in chunk:
 
-            unshuffled_comments = [re.sub(r'\bprint\s*\([^)]*\)', '', element) for element in split_elements]
+            char = '#'
+            comment_indexes = [i for i, c in enumerate(chunk) if c == char]
 
-            for comment in unshuffled_comments:
-                list_comment = list(comment.replace(" ", ""))
-                if "#" in comment: # look at alternative ways to shuffle the text will need to implement ai to shuffle the text
-                    """str + list + str"""
-                    shuffled_comments.append(list_comment[0] + "".join(random.sample(list_comment[1:-2],len(list_comment[1:-2]))) + "".join(list_comment[-1:]))
+            if comment_indexes: # Filters out empty sections of code where there are not #
+                char = '\n'
+                newline_indexes = [i for i, c in enumerate(chunk) if c == char]
+
+                if len(comment_indexes) == 1 and len(newline_indexes) == 1: # If there is one item in the chunk then randomize using the first index in the \n array
+                    new_chunk = chunk[:comment_indexes[0] + 2]
+                    new_chunk += "".join(random.sample(chunk[comment_indexes[0]+2:newline_indexes[0]], len(chunk[comment_indexes[0]+2:newline_indexes[0]])))
+                    new_chunk += chunk[newline_indexes[0]:]
+                    python_code[python_code.index(chunk)] = new_chunk
                 else:
-                    #print(type(list_comment[0:2]) , type(random.sample(list_comment[3:-4],len(list_comment[3:-4]))) , type(list_comment[-3]))
-                    """list + list + str"""
-                    shuffled_comments.append("".join(list_comment[0:2]) + "".join(random.sample(list_comment[3:-4],len(list_comment[3:-4]))) + "".join(list_comment[-3:]))
+                    for i in range(1,len(comment_indexes)):
+                        if comment_indexes[i] > newline_indexes[i]:
+                            newline_indexes.pop(newline_indexes.index(newline_indexes[i]))
 
-            print(shuffled_comments)
+                    new_chunk = chunk[:comment_indexes[0] + 2]
+                    new_chunk += "".join(random.sample(chunk[comment_indexes[0]+2:newline_indexes[0]], len(chunk[comment_indexes[0]+2:newline_indexes[0]])))
+                    new_chunk += chunk[newline_indexes[0]:]
+                    python_code[python_code.index(chunk)] = new_chunk
 
-        # now put the comments back into the code
-        
         # make a section that focuses on variable names and converting those
-        if '=' in element:
+        if '=' in chunk:
             "Swap variable names with names of fruit"
-        if "def" in element: # formats function declaration to be exec("""""")
-            python_code[idx]= 'exec("""'+ element + '""")'
+        if "def" in chunk: # formats function declaration to be exec("""""")
+            python_code[idx]= 'exec("""'+ chunk + '""")'
 
     #print(python_code)
 
