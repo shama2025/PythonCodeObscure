@@ -41,19 +41,15 @@ def scrape_cwd():
                 python_code.update({key: content})
         except Exception as e:
             print(f"Error reading file {file}: {str(e)}")
-        #print(python_code)
     return formatter(chunk_dict(python_code))
 
 def chunk_dict(python_code):
     """This function will chunk the dictionary values to format one function at a time"""
     chunks = ""
     chunked_list = []
-    print(type(python_code))
     python_code_list = python_code[0] #Change this when it comes to multiple file support
     python_code_list.append('\n')
-    print(type(python_code_list))
     for chunk in python_code_list:
-        print("Lines: ", chunk)
         if not chunk.isspace():
             chunks += chunk
         else:
@@ -146,7 +142,7 @@ def main():
     """This function will house all input for the file"""
     scraped_python_code = scrape_cwd()
 
-    with open("test12.py", "w") as f:
+    with open("test.py", "w") as f:
         for code in scraped_python_code:
             f.write(code)
 
