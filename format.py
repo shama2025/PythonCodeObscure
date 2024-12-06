@@ -131,7 +131,7 @@ def formatter(python_code):
         if "def" in chunk:
             python_code[python_code.index(chunk)] = f"exec(''' \n{chunk} ''')\n"
     fruit_names = get_random_fruit_names(len(var_names))
-    for i, chunk in enumerate(python_code): # Fix this to change all names to fruit
+    for i, chunk in enumerate(python_code):
         for name in var_names:
             chunk = chunk.replace(name, fruit_names[var_names.index(name)])
         python_code[i] = chunk
