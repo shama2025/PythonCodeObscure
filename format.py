@@ -3,6 +3,31 @@ import itertools
 import random
 from toolz import partition
 import re
+FRUITS = [
+    "apple",
+    "banana",
+    "cherry",
+    "date",
+    "elderberry",
+    "fig",
+    "grape",
+    "honeydew",
+    "kiwi",
+    "lemon",
+    "mango",
+    "nectarine",
+    "orange",
+    "papaya",
+    "quince",
+    "raspberry",
+    "strawberry",
+    "tangerine",
+    "ugli fruit",
+    "watermelon"
+]
+
+def get_random_fruit_names(var_name_len):
+    return [FRUITS.pop(random.randint(0, len(FRUITS) - 1)) for _ in range(var_name_len)]
 
 def scrape_cwd():
     """This function will scrape the text of each python file and return the text"""
@@ -14,20 +39,21 @@ def scrape_cwd():
             with open("test.py", "r") as f:
                 content = f.readlines()
                 python_code.update({key: content})
-                key += 1
         except Exception as e:
             print(f"Error reading file {file}: {str(e)}")
+        #print(python_code)
     return formatter(chunk_dict(python_code))
 
-
-# Remove this function maybe
 def chunk_dict(python_code):
     """This function will chunk the dictionary values to format one function at a time"""
     chunks = ""
-
     chunked_list = []
-    test_py_list = python_code[0]
-    for chunk in test_py_list:
+    print(type(python_code))
+    python_code_list = python_code[0] #Change this when it comes to multiple file support
+    python_code_list.append('\n')
+    print(type(python_code_list))
+    for chunk in python_code_list:
+        print("Lines: ", chunk)
         if not chunk.isspace():
             chunks += chunk
         else:
@@ -36,41 +62,39 @@ def chunk_dict(python_code):
     return chunked_list
 
 def get_var_names(chunk):
-            pattern = r'\b(def|if|else|for|in|return|range|import|from|as|with|try|except|class|lambda|while|break|continue|and|or|not|is|None|True|False)\b|[()\[\]{},:;]|[+*/%\-<>=!&|^~]+|[\'"].*?[\'"]|__name__'
-            variable_indexes = [i for i, c in enumerate(chunk) if c == "="]
-            newline_indexes = [i for i, c in enumerate(chunk) if c == "\n"]
-            result = [variable_indexes[0]] + [
-                    variable_indexes[i+1]
-                    for i in range(len(variable_indexes)-1)
-                    if abs(variable_indexes[i+1] - variable_indexes[i]) > 1
-                ]
-            variable_indexes = result
-            newline_indexes = newline_indexes[:-(len(newline_indexes) - len(variable_indexes))]
+            if "=" in chunk:
+                pattern = r'\b(def|if|else|for|in|return|range|import|from|as|with|try|except|class|lambda|while|break|continue|and|or|not|is|None|True|False)\b|[()\[\]{},:;]|[+*/%\-<>=!&|^~]+|[\'"].*?[\'"]|__name__'
+                variable_indexes = [i for i, c in enumerate(chunk) if c == "="]
+                newline_indexes = [i for i, c in enumerate(chunk) if c == "\n"]
+                result = [variable_indexes[0]] + [
+                        variable_indexes[i+1]
+                        for i in range(len(variable_indexes)-1)
+                        if abs(variable_indexes[i+1] - variable_indexes[i]) > 1
+                    ]
+                variable_indexes = result
+                newline_indexes = newline_indexes[:-(len(newline_indexes) - len(variable_indexes))]
 
-            combined_list = sorted(itertools.chain(newline_indexes,variable_indexes))
+                combined_list = sorted(itertools.chain(newline_indexes,variable_indexes))
 
-            if len(combined_list) > 2:
-                combined_list = list(partition(2,combined_list))
-                for sublist in combined_list:
+                if len(combined_list) > 2:
+                    combined_list = list(partition(2,combined_list))
+                    for sublist in combined_list:
 
-                    test = re.sub(pattern,'',chunk[sublist[0]:sublist[1]])
-                    has_hashtag = test.find('#')
-                    if  has_hashtag != -1:
-                        test = test.replace(test[has_hashtag:sublist[0]+8],'').replace("\n",'').replace(' ','')
-                    #print(chunk.replace(test,"Some fruit"))
-                return test
-            else:
-                    test = re.sub(pattern,'',chunk[combined_list[0]:combined_list[1]])
-                    test = test.replace(test[combined_list[0]:combined_list[1]],'').replace("\n",'').replace(' ','')
+                        var_name = re.sub(pattern,'',chunk[sublist[0]:sublist[1]])
+                        has_hashtag = var_name.find('#')
+                        if  has_hashtag != -1:
+                            var_name = var_name.replace(var_name[has_hashtag:sublist[0]+8],'').replace("\n",'').replace(' ','')
+                    return var_name
+                else:
+                        var_name = re.sub(pattern,'',chunk[combined_list[0]:combined_list[1]])
+                        var_name = var_name.replace(var_name[combined_list[0]:combined_list[1]],'').replace("\n",'').replace(' ','')
 
-                    return test
-
+                        return var_name
 
 def formatter(python_code):
     """This function will feature formating the document and return a newly formated file"""
-
+    var_names = []
     for chunk in python_code:
-        
         if "#" in chunk:  # or '"""' in chunk:
 
             comment_indexes = [i for i, c in enumerate(chunk) if c == "#"]
@@ -78,7 +102,7 @@ def formatter(python_code):
             if comment_indexes:
                 newline_indexes = [i for i, c in enumerate(chunk) if c == "\n"]
 
-                if len(comment_indexes) == 1 and len(newline_indexes) == 1:
+                if len(comment_indexes) == 1:
                     new_chunk = chunk[: comment_indexes[0] + 1]
                     new_chunk += "".join(
                         random.sample(
@@ -89,64 +113,39 @@ def formatter(python_code):
                     new_chunk += chunk[newline_indexes[0] :]
                     python_code[python_code.index(chunk)] = new_chunk
                 else:
-                    for i in range(1, len(comment_indexes)):
+                    for i in range(0, len(comment_indexes)):
                         if comment_indexes[i] > newline_indexes[i]:
                             newline_indexes.pop(
                                 newline_indexes.index(newline_indexes[i])
                             )
 
-                    # will need to get the length of the comment and then pop everything right of it
-                    """
-                        for example:
-                            comment_indexes = [5,17]
-                            newline_indexes = [10,34,16]
+                    for i in range(0,len(comment_indexes)):
+                        new_chunk = chunk[: comment_indexes[i] + 1]
+                        comment = chunk[comment_indexes[i]:newline_indexes[i]].split('#')
+                        if '' in comment:
+                            comment.remove('')
+                        comment[0] = '#' + "".join(random.sample(comment[0],len(comment[0])))
+                    python_code[python_code.index(chunk)] = chunk.replace(chunk[comment_indexes[i]:newline_indexes[i]], comment[0])
+                    chunk = chunk.replace(chunk[comment_indexes[i]:newline_indexes[i]], comment[0])
 
-                            newline_indexes = newline_indexes.pop(everything right of len(comment_indexes))
-
-                            newline_indexes = [10,34]
-                    """
-                    # Fix this to include the second set of comments
-                    #newline_indexes = newline_indexes[:-len(comment_indexes)+1]
-                    # print("Post pop Newline indexs: ", newline_indexes)
-
-                    # print("Comment indexes: ", comment_indexes)
-                    new_chunk= chunk[: comment_indexes[0] + 1] # This gets the #
-                   # print(new_chunk)
-                    new_chunk += "".join( # This randomizes the actual comment
-                        random.sample(
-                            chunk[comment_indexes[0] + 2 : newline_indexes[0]],
-                            len(chunk[comment_indexes[0] + 2 : newline_indexes[0]]),
-                        )
-                    )
-                    #print(chunk[newline_indexes[0]])
-                    new_chunk += chunk[newline_indexes[0] :] # This is the rest of the function
-                    python_code[python_code.index(chunk)] = new_chunk
-            chunk = new_chunk
-        if "=" in chunk:
-            print("Chunk with equal sign: \n", chunk)
-            # Will need this to be a function that returns a
-            # variable name and changes all occurences of that name
-            var_names = get_var_names(chunk)
-            print("A variable name: ",var_names)
-            python_code[python_code.index(chunk)] = chunk.replace(var_names,"Blah_Blah")
-            chunk = chunk.replace(var_names,"Blah_Blah")
-        if "print" in chunk:
-             "look for variable names and change them with the ones in var_names"
-            #  print("In print if tree: ",var_names)
-            #  print(chunk)
-             python_code[python_code.index(chunk)] = chunk.replace(var_names,"Blah_print_Blah")
-             print(python_code)
-        if "def" in chunk:  # formats function declaration to be exec("""""")
-            # can also add a way to change the parameter names as well
+        var_names.append(get_var_names(chunk))
+        if None in var_names:
+            var_names.remove(None)
+        if "def" in chunk:
             python_code[python_code.index(chunk)] = f"exec(''' \n{chunk} ''')\n"
+    fruit_names = get_random_fruit_names(len(var_names))
+    for i, chunk in enumerate(python_code): # Fix this to change all names to fruit
+        for name in var_names:
+            chunk = chunk.replace(name, fruit_names[var_names.index(name)])
+        python_code[i] = chunk
+
     return python_code
-    #print(python_code)
 
 def main():
     """This function will house all input for the file"""
     scraped_python_code = scrape_cwd()
 
-    with open("test4.py", "w") as f:
+    with open("test11.py", "w") as f:
         for code in scraped_python_code:
             f.write(code)
 
