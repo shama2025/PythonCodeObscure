@@ -95,6 +95,7 @@ def formatter(python_code):
     """This function will feature formating the document and return a newly formated file"""
     var_names = []
     for chunk in python_code:
+        var_names.append(get_var_names(chunk))
         if "#" in chunk:  # or '"""' in chunk:
 
             comment_indexes = [i for i, c in enumerate(chunk) if c == "#"]
@@ -128,7 +129,7 @@ def formatter(python_code):
                     python_code[python_code.index(chunk)] = chunk.replace(chunk[comment_indexes[i]:newline_indexes[i]], comment[0])
                     chunk = chunk.replace(chunk[comment_indexes[i]:newline_indexes[i]], comment[0])
 
-        var_names.append(get_var_names(chunk))
+
         if None in var_names:
             var_names.remove(None)
         if "def" in chunk:
@@ -145,7 +146,7 @@ def main():
     """This function will house all input for the file"""
     scraped_python_code = scrape_cwd()
 
-    with open("test11.py", "w") as f:
+    with open("test12.py", "w") as f:
         for code in scraped_python_code:
             f.write(code)
 
